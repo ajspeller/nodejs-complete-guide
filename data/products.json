@@ -1,1 +1,16 @@
-[{"id":"989839458","title":"Becoming by Michelle Obama!","imageUrl":"https://m.media-amazon.com/images/I/51QMk4Lt1kL._SL500_.jpg","description":"This book is amazing.  The FLOTUS is an amazing person!","price":"19.99"},{"id":"0.18569237631373947","title":"Audacity","imageUrl":"https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1320508242l/3312550.jpg","description":"Black POTUS","price":"19.99"}]
+[
+  {
+    "id": "989839458",
+    "title": "Becoming by Michelle Obama!",
+    "imageUrl": "https://m.media-amazon.com/images/I/51QMk4Lt1kL._SL500_.jpg",
+    "description": "This book is amazing.  The FLOTUS is an amazing person!",
+    "price": "19.99"
+  },
+  {
+    "id": "0.18569237631373947",
+    "title": "Audacity",
+    "imageUrl": "https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1320508242l/3312550.jpg",
+    "description": "Black POTUS",
+    "price": "19.99"
+  }
+]

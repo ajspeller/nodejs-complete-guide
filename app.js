@@ -1,5 +1,6 @@
 require('dotenv').config();
 require('./database/db');
+require('./util/database');
 
 const path = require('path');
 
