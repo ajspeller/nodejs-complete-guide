@@ -12,8 +12,16 @@ module.exports = {
   },
   postAddProduct: (req, res, next) => {
     const { title, imageUrl, description, price } = req.body;
-    req.user
-      .createProduct({ title, imageUrl, description, price })
+    const product = new Product(
+      title,
+      price,
+      description,
+      imageUrl,
+      null, // product id
+      req.user._id
+    );
+    product
+      .save()
       .then((result) => {
         console.log(chalk.inverse.blue('Created Product'));
         res.redirect('/admin/products');
@@ -26,10 +34,8 @@ module.exports = {
     if (!editMode) {
       return res.redirect('/');
     }
-    req.user
-      .getProducts({ where: { id } })
-      .then((products) => {
-        const product = products[0];
+    Product.findById(id)
+      .then((product) => {
         if (!product) {
           return res.redirect('/');
         }
@@ -46,15 +52,9 @@ module.exports = {
   },
   postEditProduct: (req, res, next) => {
     const { productId: id, title, price, imageUrl, description } = req.body;
-    Product.findByPk(id)
-      .then((product) => {
-        product.Id = id;
-        product.title = title;
-        product.price = price;
-        product.description = description;
-        product.imageUrl = imageUrl;
-        return product.save();
-      })
+    const product = new Product(title, price, description, imageUrl, id);
+    product
+      .save()
       .then(() => {
         console.log(chalk.inverse('Updated Product'));
         res.redirect('/admin/products');
@@ -62,8 +62,7 @@ module.exports = {
       .catch((err) => console.error('error saving: ', err));
   },
   getProducts: (req, res, next) => {
-    req.user
-      .getProducts()
+    Product.fetchAll()
       .then((products) => {
         res.render('admin/products', {
           products,
@@ -75,7 +74,7 @@ module.exports = {
   },
   postDeleteProduct: (req, res, next) => {
     const { productId: id } = req.body;
-    Product.destroy({ where: { id } })
+    Product.deleteById(id)
       .then(() => {
         console.log(chalk.inverse.red('Product deleted'));
         res.redirect('/admin/products');
