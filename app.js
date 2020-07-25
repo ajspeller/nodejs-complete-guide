@@ -10,7 +10,7 @@ const bodyParser = require('body-parser');
 const PORT = process.env.PORT || 4000;
 
 const errorController = require('./controllers/error.controller');
-const { mongoConnect } = require('./util/database');
+const mongoose = require('mongoose');
 
 const User = require('./models/User.model');
 
@@ -26,11 +26,10 @@ app.use(bodyParser.urlencoded({ extended: false, limit: '20mb' }));
 app.use(bodyParser.json());
 
 app.use((req, res, next) => {
-  User.findById('5f1b7434f91cd84d7893c9ca')
+  User.findById('5f1c8ffb690d20063816f8bb')
     .then((user) => {
       console.log(user);
-      const { username, email, cart, _id } = user;
-      req.user = new User(username, email, cart, _id);
+      req.user = user;
       next();
     })
     .catch((err) => console.error(err));
@@ -41,6 +40,25 @@ app.use(shopRoutes);
 
 app.use(errorController.get404);
 
-mongoConnect(() => {
-  app.listen(PORT, () => console.log(chalk.green('Server started: '), PORT));
-});
+mongoose
+  .connect(process.env.MONGO_DB, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  })
+  .then(() => {
+    User.findOne().then((user) => {
+      if (!user) {
+        new User({
+          username: 'ajspeller',
+          email: 'ajischillin@home.com',
+          cart: {
+            items: [],
+          },
+        }).save();
+      }
+    });
+    console.log(chalk.green.inverse('Database connection successful!'));
+    app.listen(PORT, () => console.log(chalk.green('Server started: '), PORT));
+  })
+  .catch((err) => console.error(err));

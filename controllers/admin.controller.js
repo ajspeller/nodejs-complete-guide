@@ -12,14 +12,13 @@ module.exports = {
   },
   postAddProduct: (req, res, next) => {
     const { title, imageUrl, description, price } = req.body;
-    const product = new Product(
+    const product = new Product({
       title,
       price,
       description,
       imageUrl,
-      null, // product id
-      req.user._id
-    );
+      userId: req.user,
+    });
     product
       .save()
       .then((result) => {
@@ -52,9 +51,14 @@ module.exports = {
   },
   postEditProduct: (req, res, next) => {
     const { productId: id, title, price, imageUrl, description } = req.body;
-    const product = new Product(title, price, description, imageUrl, id);
-    product
-      .save()
+    Product.findById(id)
+      .then((product) => {
+        product.title = title;
+        product.price = price;
+        product.imageUrl = imageUrl;
+        product.description = description;
+        return product.save();
+      })
       .then(() => {
         console.log(chalk.inverse('Updated Product'));
         res.redirect('/admin/products');
@@ -62,8 +66,11 @@ module.exports = {
       .catch((err) => console.error('error saving: ', err));
   },
   getProducts: (req, res, next) => {
-    Product.fetchAll()
+    Product.find()
+      // .select('name')
+      // .populate('userId')
       .then((products) => {
+        console.log(products);
         res.render('admin/products', {
           products,
           title: 'Admin Products',
@@ -74,7 +81,7 @@ module.exports = {
   },
   postDeleteProduct: (req, res, next) => {
     const { productId: id } = req.body;
-    Product.deleteById(id)
+    Product.findByIdAndRemove(id)
       .then(() => {
         console.log(chalk.inverse.red('Product deleted'));
         res.redirect('/admin/products');
