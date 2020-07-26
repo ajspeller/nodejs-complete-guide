@@ -1,17 +1,45 @@
 const chalk = require('chalk');
 const Product = require('../models/Product.model');
 
+const { validationResult } = require('express-validator');
+
 module.exports = {
   getAddProduct: (req, res, next) => {
+    let message = req.flash('error');
+    if (message.length > 0) {
+      message = message[0];
+    } else {
+      message = null;
+    }
     res.render('admin/edit-product', {
       title: 'Add Product',
       path: '/admin/add-product',
       editing: false,
       product: new Product(),
+      errorMessage: message,
+      oldInput: { title: '', imageUrl: '', description: '', price: '' },
+      validationErrors: [],
     });
   },
   postAddProduct: (req, res, next) => {
     const { title, imageUrl, description, price } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.array());
+      return res.status(422).render('admin/edit-product', {
+        title: 'Add Product',
+        path: '/admin/add-product',
+        editing: false,
+        product: new Product(),
+        errorMessage: {
+          msg: errors.array().map((e) => {
+            return e.msg;
+          }),
+        },
+        oldInput: { title, imageUrl, description, price },
+        validationErrors: errors.array(),
+      });
+    }
     const product = new Product({
       title,
       price,
@@ -33,6 +61,12 @@ module.exports = {
     if (!editMode) {
       return res.redirect('/');
     }
+    let message = req.flash('error');
+    if (message.length > 0) {
+      message = message[0];
+    } else {
+      message = null;
+    }
     Product.findById(id)
       .then((product) => {
         if (!product) {
@@ -43,6 +77,9 @@ module.exports = {
           path: '/admin/edit-product',
           editing: editMode,
           product,
+          errorMessage: message,
+          oldInput: { title: '', imageUrl: '', description: '', price: '' },
+          validationErrors: [],
         });
       })
       .catch((err) => {
@@ -51,6 +88,32 @@ module.exports = {
   },
   postEditProduct: (req, res, next) => {
     const { productId: id, title, price, imageUrl, description } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors.array());
+      Product.findById(id)
+        .then((product) => {
+          if (!product) {
+            return res.redirect('/');
+          }
+          return res.status(422).render('admin/edit-product', {
+            title: 'Edit Product',
+            path: '/admin/edit-product',
+            editing: editMode,
+            product,
+            errorMessage: {
+              msg: errors.array().map((e) => {
+                return e.msg;
+              }),
+            },
+            oldInput: { id, title, price, imageUrl, description },
+            validationErrors: errors.array(),
+          });
+        })
+        .catch((err) => {
+          console.error('database error: ', err);
+        });
+    }
     Product.findById(id)
       .then((product) => {
         if (product.userId.toString() !== req.session.user._id.toString()) {
@@ -60,6 +123,7 @@ module.exports = {
         product.price = price;
         product.imageUrl = imageUrl;
         product.description = description;
+        product._id = id;
         return product.save().then(() => {
           console.log(chalk.inverse('Updated Product'));
           res.redirect('/admin/products');
