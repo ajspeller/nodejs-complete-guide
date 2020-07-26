@@ -1,27 +1,102 @@
 const chalk = require('chalk');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User.model');
 
 module.exports = {
   getLogin: (req, res, next) => {
+    let message = req.flash('error');
+    if (message.length > 0) {
+      message = message[0];
+    } else {
+      message = null;
+    }
     res.render('auth/login', {
       path: '/login',
       title: 'Login',
-      product: [],
-      isAuthenticated: req.session.isLoggedIn,
+      errorMessage: message,
+    });
+  },
+  getSignup: (req, res, next) => {
+    let message = req.flash('error');
+    if (message.length > 0) {
+      message = message[0];
+    } else {
+      message = null;
+    }
+    res.render('auth/signup', {
+      path: '/signup',
+      title: 'Signup',
+      errorMessage: message,
     });
   },
   postLogin: (req, res, next) => {
-    User.findById('5f1c8ffb690d20063816f8bb')
+    const { email, password } = req.body;
+    User.findOne({ email })
       .then((user) => {
-        console.log(chalk.inverse.blue('Logged In'));
-        req.session.user = user;
-        req.session.isLoggedIn = true;
-        return req.session.save();
+        if (user) {
+          const hashedPassword = user.password;
+          bcrypt
+            .compare(password, hashedPassword)
+            .then((passwordMatch) => {
+              console.log('comparing', passwordMatch);
+              if (passwordMatch) {
+                req.session.user = user;
+                req.session.isLoggedIn = true;
+                console.log(chalk.inverse.blue('Logged In'));
+                req.session.save((err) => {
+                  if (err) {
+                    console.error(err);
+                  }
+                  res.redirect('/');
+                });
+              } else {
+                req.flash('error', 'Invalid Credentials');
+                res.redirect('/login');
+              }
+            })
+            .catch((err) => {
+              req.flash('error', 'Invalid Credentials');
+              res.redirect('/login');
+            });
+        } else {
+          console.log('user not found');
+          req.flash('error', 'Invalid Credentials');
+          res.redirect('/login');
+        }
       })
-      .then(() => {
-        res.redirect('/');
+      .catch((err) => {
+        console.error(err);
+        res.redirect('/login');
+      });
+  },
+  postSignup: (req, res, next) => {
+    const { email, password, confirmPassword } = req.body;
+    User.findOne({ email: email })
+      .then((user) => {
+        if (user) {
+          req.flash('error', 'E-mail already exists');
+          return res.redirect('/signup');
+        }
+        if (password === confirmPassword) {
+          return bcrypt
+            .hash(password, 12)
+            .then((hashedPassword) => {
+              const newUser = new User({
+                email,
+                password: hashedPassword,
+                cart: { items: [] },
+              });
+              return newUser.save();
+            })
+            .then((result) => {
+              res.redirect('/login');
+            });
+        }
+        return res.redirect('/signup');
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+      });
   },
   postLogout: (req, res, next) => {
     req.session.destroy((err) => {

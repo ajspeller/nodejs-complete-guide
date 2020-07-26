@@ -8,6 +8,9 @@
   <%- include('../includes/navigation.ejs') %>
 
   <main>
+    <% if (errorMessage) { %>
+      <div class="user-message user-message__error"><%= errorMessage %> </div>
+    <% } %>
     <form class="login-form" 
           action="/login" 
           method="POST">
@@ -28,7 +31,7 @@
                required>
       </div>
 
-      <input type="hidden" name="productId" value="<%= product._id %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
       <button class="btn" type="submit">Login</button>
 

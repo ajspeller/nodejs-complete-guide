@@ -13,12 +13,14 @@ const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
 const PORT = process.env.PORT || 4000;
 
-const User = require('./models/User.model');
 const app = express();
 const store = new MongoDBStore({
   uri: process.env.MONGO_DB,
   collection: 'sessions',
 });
+const csrf = require('csurf');
+const csrfProtection = csrf();
+const flash = require('connect-flash');
 
 const adminRoutes = require('./routes/admin.routes');
 const shopRoutes = require('./routes/shop.routes');
@@ -43,6 +45,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: false, limit: '20mb' }));
 app.use(bodyParser.json());
 
+app.use(csrfProtection);
+app.use(flash());
+
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
@@ -54,19 +65,9 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useFindAndModify: false,
+    useCreateIndex: true,
   })
-  .then(() => {
-    User.findOne().then((user) => {
-      if (!user) {
-        new User({
-          username: 'ajspeller',
-          email: 'ajischillin@home.com',
-          cart: {
-            items: [],
-          },
-        }).save();
-      }
-    });
+  .then((result) => {
     console.log(chalk.green.inverse('Database connection successful!'));
     app.listen(PORT, () => console.log(chalk.green('Server started: '), PORT));
   })

@@ -12,7 +12,6 @@ module.exports = {
           products,
           title: 'All Products',
           path: '/products',
-          isAuthenticated: req.session.isLoggedIn,
         });
       })
       .catch((err) => console.error('getIndex: ', err));
@@ -24,7 +23,6 @@ module.exports = {
           products,
           title: 'Shop',
           path: '/',
-          isAuthenticated: req.session.isLoggedIn,
         });
       })
       .catch((err) => console.error('getIndex: ', err));
@@ -40,7 +38,6 @@ module.exports = {
           path: '/cart',
           title: 'Your Cart',
           products,
-          isAuthenticated: req.session.isLoggedIn,
         });
       })
       .catch((err) => console.error(err));
@@ -67,15 +64,17 @@ module.exports = {
           path: '/orders',
           title: 'Orders',
           orders,
-          isAuthenticated: req.session.isLoggedIn,
         });
       })
       .catch((err) => console.error(err));
   },
   postOrder: (req, res, next) => {
-    req.session.user
-      .populate('cart.items.productId')
-      .execPopulate()
+    let foundUser;
+    User.findById(req.session.user._id)
+      .then((user) => {
+        foundUser = user;
+        return user.populate('cart.items.productId').execPopulate();
+      })
       .then((user) => {
         const products = user.cart.items.map((i) => {
           return {
@@ -85,7 +84,7 @@ module.exports = {
         });
         const order = new Order({
           user: {
-            username: req.session.user.username,
+            email: req.session.user.email,
             userId: req.session.user,
           },
           products,
@@ -93,7 +92,7 @@ module.exports = {
         return order.save();
       })
       .then((result) => {
-        return req.session.user.clearCart();
+        return foundUser.clearCart();
       })
       .then((result) => {
         res.redirect('/orders');
@@ -104,7 +103,6 @@ module.exports = {
     res.render('shop/checkout', {
       path: '/checkout',
       title: 'Checkout',
-      isAuthenticated: req.session.isLoggedIn,
     });
   },
   getProduct: (req, res, next) => {
@@ -115,7 +113,6 @@ module.exports = {
           title: product.title,
           path: '/products',
           product,
-          isAuthenticated: req.session.isLoggedIn,
         });
       })
       .catch((err) => console.error('db error: ', err));

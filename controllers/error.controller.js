@@ -3,7 +3,6 @@ module.exports = {
     res.status(404).render('404', {
       title: 'Page not found',
       path: false,
-      isAuthenticated: req.session.isLoggedIn,
     });
   },
 };
