@@ -53,20 +53,22 @@ module.exports = {
     const { productId: id, title, price, imageUrl, description } = req.body;
     Product.findById(id)
       .then((product) => {
+        if (product.userId.toString() !== req.session.user._id.toString()) {
+          return res.redirect('/');
+        }
         product.title = title;
         product.price = price;
         product.imageUrl = imageUrl;
         product.description = description;
-        return product.save();
-      })
-      .then(() => {
-        console.log(chalk.inverse('Updated Product'));
-        res.redirect('/admin/products');
+        return product.save().then(() => {
+          console.log(chalk.inverse('Updated Product'));
+          res.redirect('/admin/products');
+        });
       })
       .catch((err) => console.error('error saving: ', err));
   },
   getProducts: (req, res, next) => {
-    Product.find()
+    Product.find({ userId: req.session.user._id })
       // .select('name')
       // .populate('userId')
       .then((products) => {
@@ -81,7 +83,7 @@ module.exports = {
   },
   postDeleteProduct: (req, res, next) => {
     const { productId: id } = req.body;
-    Product.findByIdAndRemove(id)
+    Product.deleteOne({ _id: id, userId: req.session.user._id })
       .then(() => {
         console.log(chalk.inverse.red('Product deleted'));
         res.redirect('/admin/products');

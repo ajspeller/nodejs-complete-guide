@@ -12,7 +12,7 @@
       <div class="user-message user-message__error"><%= errorMessage %> </div>
     <% } %>
     <form class="login-form" 
-          action="/login" 
+          action="/reset" 
           method="POST">
 
       <div class="form-control">
@@ -23,22 +23,11 @@
                required>
       </div>
       
-      <div class="form-control">
-        <label for="password">password</label>
-        <input type="password" 
-               id="password" 
-               name="password" 
-               required>
-      </div>
-
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-      <button class="btn" type="submit">Login</button>
+      <button class="btn" type="submit">Reset Password</button>
 
     </form>
-    <div class="centered">
-      <a href="/reset">Reset Password</a>
-    </div>
   </main>
   
 <%- include('../includes/end.ejs') %> 
