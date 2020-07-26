@@ -8,6 +8,7 @@ module.exports = {
       path: '/admin/add-product',
       editing: false,
       product: new Product(),
+      isAuthenticated: req.isLoggedIn,
     });
   },
   postAddProduct: (req, res, next) => {
@@ -17,7 +18,7 @@ module.exports = {
       price,
       description,
       imageUrl,
-      userId: req.user,
+      userId: req.session.user,
     });
     product
       .save()
@@ -43,6 +44,7 @@ module.exports = {
           path: '/admin/edit-product',
           editing: editMode,
           product,
+          isAuthenticated: req.session.isLoggedIn,
         });
       })
       .catch((err) => {
@@ -75,6 +77,7 @@ module.exports = {
           products,
           title: 'Admin Products',
           path: '/admin/products',
+          isAuthenticated: req.session.isLoggedIn,
         });
       })
       .catch((err) => console.error('db error: ', error));

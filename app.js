@@ -4,39 +4,48 @@ const path = require('path');
 
 const chalk = require('chalk');
 const express = require('express');
-const app = express();
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
-const PORT = process.env.PORT || 4000;
 
 const errorController = require('./controllers/error.controller');
 const mongoose = require('mongoose');
+const session = require('express-session');
+const MongoDBStore = require('connect-mongodb-session')(session);
+const PORT = process.env.PORT || 4000;
 
 const User = require('./models/User.model');
+const app = express();
+const store = new MongoDBStore({
+  uri: process.env.MONGO_DB,
+  collection: 'sessions',
+});
 
 const adminRoutes = require('./routes/admin.routes');
 const shopRoutes = require('./routes/shop.routes');
+const authRoutes = require('./routes/auth.routes');
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
 app.use(morgan('dev'));
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store,
+  })
+);
+
 app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(bodyParser.urlencoded({ extended: false, limit: '20mb' }));
 app.use(bodyParser.json());
 
-app.use((req, res, next) => {
-  User.findById('5f1c8ffb690d20063816f8bb')
-    .then((user) => {
-      console.log(user);
-      req.user = user;
-      next();
-    })
-    .catch((err) => console.error(err));
-});
-
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
+app.use(authRoutes);
 
 app.use(errorController.get404);
 
