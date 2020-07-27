@@ -22,7 +22,19 @@ module.exports = {
     });
   },
   postAddProduct: (req, res, next) => {
-    const { title, imageUrl, description, price } = req.body;
+    const { title, description, price } = req.body;
+    const { file: image } = req;
+    if (!image) {
+      return res.status(422).render('admin/edit-product', {
+        title: 'Add Product',
+        path: '/admin/add-product',
+        editing: false,
+        product: new Product(),
+        errorMessage: 'Attached file is not an image',
+        oldInput: { title, imageUrl, description, price },
+        validationErrors: [],
+      });
+    }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log(errors.array());
@@ -44,7 +56,7 @@ module.exports = {
       title,
       price,
       description,
-      imageUrl,
+      imageUrl: image.path,
       userId: req.session.user,
     });
     product
@@ -97,7 +109,8 @@ module.exports = {
       });
   },
   postEditProduct: (req, res, next) => {
-    const { productId: id, title, price, imageUrl, description } = req.body;
+    const { productId: id, title, price, description } = req.body;
+    const { file: image } = req;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log(errors.array());
@@ -135,7 +148,9 @@ module.exports = {
         }
         product.title = title;
         product.price = price;
-        product.imageUrl = imageUrl;
+        if (image) {
+          product.imageUrl = image.path;
+        }
         product.description = description;
         product._id = id;
         return product.save().then(() => {

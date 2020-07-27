@@ -13,7 +13,8 @@
     <% } %>
     <form class="product-form" 
           action="<% if (editing) { %>/admin/edit-product<% } else { %>/admin/add-product<% } %>" 
-          method="POST">
+          method="POST"
+          enctype="multipart/form-data">
 
       <div class="form-control">
         <label for="title">Title</label>
@@ -25,13 +26,20 @@
                required>
       </div>
       
-      <div class="form-control">
+      <!-- <div class="form-control">
         <label for="imageUrl">ImageUrl</label>
         <input class="<%= validationErrors.find(e => e.param === 'imageUrl') ? 'invalid' : '' %>"
                type="text" 
                id="imageUrl" 
                name="imageUrl" 
                value="<%= product.imageUrl %>" >
+      </div> -->
+
+      <div class="form-control">
+        <label for="image">Image</label>
+        <input type="file" 
+               id="image" 
+               name="image">
       </div>
 
       <div class="form-control">
