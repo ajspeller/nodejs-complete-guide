@@ -53,7 +53,13 @@ module.exports = {
         console.log(chalk.inverse.blue('Created Product'));
         res.redirect('/admin/products');
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
   getEditProduct: (req, res, next) => {
     const { edit: editMode } = req.query;
@@ -84,6 +90,10 @@ module.exports = {
       })
       .catch((err) => {
         console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
       });
   },
   postEditProduct: (req, res, next) => {
@@ -112,6 +122,10 @@ module.exports = {
         })
         .catch((err) => {
           console.error('database error: ', err);
+          // res.redirect('/500');
+          const error = new Error(err);
+          error.httpStatusCode = 500;
+          return next(error);
         });
     }
     Product.findById(id)
@@ -129,7 +143,13 @@ module.exports = {
           res.redirect('/admin/products');
         });
       })
-      .catch((err) => console.error('error saving: ', err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
   getProducts: (req, res, next) => {
     Product.find({ userId: req.session.user._id })
@@ -143,7 +163,13 @@ module.exports = {
           path: '/admin/products',
         });
       })
-      .catch((err) => console.error('db error: ', error));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
   postDeleteProduct: (req, res, next) => {
     const { productId: id } = req.body;
@@ -152,6 +178,12 @@ module.exports = {
         console.log(chalk.inverse.red('Product deleted'));
         res.redirect('/admin/products');
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
 };

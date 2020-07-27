@@ -14,7 +14,13 @@ module.exports = {
           path: '/products',
         });
       })
-      .catch((err) => console.error('getIndex: ', err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
   getIndex: (req, res, next) => {
     Product.find()
@@ -25,7 +31,13 @@ module.exports = {
           path: '/',
         });
       })
-      .catch((err) => console.error('getIndex: ', err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
   getCart: (req, res, next) => {
     User.findById(req.session.user._id)
@@ -40,7 +52,13 @@ module.exports = {
           products,
         });
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
   postCart: (req, res, next) => {
     const { productId: id } = req.body;
@@ -66,7 +84,13 @@ module.exports = {
           orders,
         });
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
   postOrder: (req, res, next) => {
     let foundUser;
@@ -97,7 +121,13 @@ module.exports = {
       .then((result) => {
         res.redirect('/orders');
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
   getCheckout: (req, res, next) => {
     res.render('shop/checkout', {
@@ -126,6 +156,12 @@ module.exports = {
       .then((result) => {
         res.redirect('/cart');
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
 };

@@ -98,8 +98,11 @@ module.exports = {
         }
       })
       .catch((err) => {
-        console.error(err);
-        res.redirect('/login');
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
       });
   },
   postSignup: (req, res, next) => {
@@ -140,7 +143,13 @@ module.exports = {
       .then((result) => {
         res.redirect('/login');
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
   postLogout: (req, res, next) => {
     req.session.destroy((err) => {
@@ -196,7 +205,13 @@ module.exports = {
             `,
           });
         })
-        .catch((err) => console.error(err));
+        .catch((err) => {
+          console.error('database error: ', err);
+          // res.redirect('/500');
+          const error = new Error(err);
+          error.httpStatusCode = 500;
+          return next(error);
+        });
     });
   },
   getNewPassword: (req, res, next) => {
@@ -221,7 +236,13 @@ module.exports = {
           token,
         });
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
   postNewPassword: (req, res, next) => {
     const { userId, password, resetToken } = req.body;
@@ -243,6 +264,12 @@ module.exports = {
             res.redirect('/login');
           });
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error('database error: ', err);
+        // res.redirect('/500');
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   },
 };
