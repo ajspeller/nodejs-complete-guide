@@ -1,10 +1,47 @@
+require('dotenv').config();
+
+const path = require('path');
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const feedRoutes = require('./routes/feed.routes');
+const authRoutes = require('./routes/auth.routes');
+const statusRoutes = require('./routes/status.routes');
+const mongoose = require('mongoose');
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'images');
+  },
+  filename: function (req, file, cb) {
+    cb(null, new Date().getTime() + '-' + file.originalname);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === 'image/png' ||
+    file.mimetype === 'image/jpg' ||
+    file.mimetype === 'image/jpeg'
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
+app.use(
+  multer({
+    storage,
+    fileFilter,
+  }).single('image')
+);
+
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -17,6 +54,8 @@ app.use((req, res, next) => {
 });
 
 app.use('/feed', feedRoutes);
+app.use('/auth', authRoutes);
+app.use('/status', statusRoutes);
 
 app.use((req, res, next) => {
   // route not found
@@ -25,7 +64,18 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
   // error handling
-  res.status(500).json({ error: 'unknown server error' });
+  console.log(err);
+  const { statusCode, message, data } = err;
+  res.status(statusCode || 500).json({ message, data });
 });
 
-app.listen(4500);
+mongoose
+  .connect(process.env.MONGO_DB, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then((result) => {
+    console.log('Connected to database');
+    app.listen(8080, () => console.log('listening on port 8080'));
+  })
+  .catch((err) => console.log('Database connection error: ', err));
