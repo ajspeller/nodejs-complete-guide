@@ -3,6 +3,7 @@ const Post = require('../models/Post.model');
 const User = require('../models/User.model');
 const fs = require('fs');
 const path = require('path');
+const io = require('../socket');
 
 module.exports = {
   getPosts: async (req, res, next) => {
@@ -13,6 +14,7 @@ module.exports = {
       const totalItems = await Post.find().countDocuments();
       const posts = await Post.find()
         .populate('creator')
+        .sort({ createdAt: -1 })
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
 
@@ -69,12 +71,15 @@ module.exports = {
       imageUrl: req.file.path.replace('\\', '/'),
       creator: req.userId,
     });
-
     try {
       await post.save();
       const user = await User.findById(req.userId);
       user.posts.push(post);
       await user.save();
+      io.getIO().emit('posts', {
+        action: 'create',
+        post: { ...post._doc, creator: { _id: req.userId, name: user.name } },
+      });
       res.status(201).json({
         message: 'post created',
         post,
@@ -100,8 +105,8 @@ module.exports = {
         throw error;
       }
       if (post.creator.toString() !== req.userId) {
-        const errors = new Error('Unauthorized action');
-        errors.statusCode = 403;
+        const error = new Error('Unauthorized action');
+        error.statusCode = 403;
         throw error;
       }
       clearImage(post.imageUrl);
@@ -109,6 +114,7 @@ module.exports = {
       const user = User.findById(req.userId);
       user.post.pull(postId);
       await user.save();
+      io.getIO().emit('posts', { action: 'delete', post: id });
       res.status(200).json({ message: 'Post deleted' });
     } catch (err) {
       if (!err.statusCode) {
@@ -136,15 +142,17 @@ module.exports = {
       throw error;
     }
     try {
-      const post = await Post.findById(id);
+      const post = await Post.findById(id).populate('creator');
       if (!post) {
         const error = new Error('Error fetching post');
         error.statusCode = 404;
         throw error;
       }
-      if (post.creator.toString() !== req.userId) {
-        const errors = new Error('Unauthorized action');
-        errors.statusCode = 403;
+      console.log(post.creator._id);
+      console.log(req.userId);
+      if (post.creator._id.toString() !== req.userId) {
+        const error = new Error('Unauthorized action');
+        error.statusCode = 403;
         throw error;
       }
       if (imageUrl !== post.imageUrl) {
@@ -153,7 +161,8 @@ module.exports = {
       post.title = title;
       post.content = content;
       post.imageUrl = imageUrl.replace('\\', '/');
-      await post.save();
+      const result = await post.save();
+      io.getIO().emit('posts', { action: 'update', post: result });
       res.status(200).json({ message: 'Update Successful', post: result });
     } catch (err) {
       if (!err.statusCode) {

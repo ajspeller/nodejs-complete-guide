@@ -73,9 +73,16 @@ mongoose
   .connect(process.env.MONGO_DB, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useFindAndModify: false
   })
   .then((result) => {
     console.log('Connected to database');
-    app.listen(8080, () => console.log('listening on port 8080'));
+    const server = app.listen(8080, () =>
+      console.log('listening on port 8080')
+    );
+    const io = require('./socket').init(server);
+    io.on('connection', (socket) => {
+      console.log('socket client connected');
+    });
   })
   .catch((err) => console.log('Database connection error: ', err));
